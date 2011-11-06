@@ -10,27 +10,17 @@ typedef struct _task_t {
     gint weight;
 } task_t;
 
-GArray *read_tasks(gchar *filename) {
+GArray *read_tasks(void) {
     GArray *tasks;
     task_t t;
     gint i;
-    FILE *file;
-
-    if (filename != NULL) {
-        file = fopen(filename, "r");
-    } else {
-        file = stdin;
-    }
-    g_assert(file != NULL);
 
     i = 1;
     tasks = g_array_new(FALSE, FALSE, sizeof(task_t));
-    while (fscanf(file, "%d %d %d", &t.length, &t.due, &t.weight) != EOF) {
+    while (scanf("%d %d %d", &t.length, &t.due, &t.weight) != EOF) {
         t.id = i++;
         g_array_append_val(tasks, t);
     }
-
-    if (filename != NULL) fclose(file);
 
     return tasks;
 }
@@ -122,7 +112,7 @@ GArray *compute(GArray *tasks) {
 int main(void) {
     GArray *tasks, *best;
 
-    tasks = read_tasks("data/11.txt");
+    tasks = read_tasks();
     best = compute(tasks);
     print_tasks(tasks, best);
 
