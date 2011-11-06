@@ -2,6 +2,7 @@
 #include <glib/gprintf.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 typedef struct _task_t {
     gint id;
@@ -29,84 +30,95 @@ void print_tasks(GArray *tasks, GArray *best) {
     gint i;
     task_t t;
 
-    g_printf(" Nr | p_j | d_j | w_j \n");
-    g_printf("----+-----+-----+-----\n");
+    printf(" Nr | p_j | d_j | w_j \n");
+    printf("----+-----+-----+-----\n");
     for (i = 0; i < (gint)tasks->len; i++) {
         t = g_array_index(tasks, task_t, i);
-        g_printf("%2d. |%4d |%4d |%4d \n", t.id, t.length, t.due, t.weight);
+        printf("%2d. |%4d |%4d |%4d \n", t.id, t.length, t.due, t.weight);
     }
 
     if (best != NULL) {
-        g_printf("Best solution is: ");
+        printf("\nBest solution is: ");
         for (i = 0; i < (gint)best->len; i++) {
             t = g_array_index(best, task_t, i);
-            g_printf("%d ", t.id);
+            printf("%d ", t.id);
         }
-        g_printf("\n");
+        printf("\n");
     }
 }
 
-gint target(GArray *solution) {
-    return 42;
+gint target(task_t *solution, gint n) {
+    gint sum, i, time;
+
+    for (i = 0, time = 0, sum = 0; i < n; i++) {
+        time += solution[i].length;
+        sum += solution[i].weight * MAX(0, time - solution[i].due);
+    }
+
+    return sum;
 }
 
-/* TODO rewrite to pass best as a task_t array instead of GArray */
-GArray *permute(gint n, task_t *tasks, gint *fill, gint index, gboolean *used, GArray *best) {
+void permute(gint n, task_t *tasks, gint *fill, gint index, gboolean *used, task_t **best) {
     gint i, j;
-    GArray *array, *ptr;
+    task_t *array, *ptr;
 
     for (i = 0; i < n; i++) {
         if (used[i] == FALSE) {
             fill[index] = i;
+
+            /* Rebuilding task array */
+            array = g_new(task_t, n);
+            for (j = 0; j < index; j++) array[j] = tasks[fill[j]];
+
             if (index < n-1) {
-                /* Override point for elimination */
+                /* Override point for elimination, return from here to skip */
+                if (target(array, index) > target(*best, n)) return;
 
                 used[i] = TRUE;
                 permute(n, tasks, fill, index + 1, used, best);
                 used[i] = FALSE;
             } else {
-                /* We have a complete permutation, rebuilding task array */
-                array = g_array_sized_new(FALSE, FALSE, sizeof(task_t), n);
-                for (j = 0; j < n; j++)
-                    g_array_append_val(array, tasks[fill[j]]);
+                /* We have a complete permutation */
+
 
                 /* Calling target function */
-                if (target(array) < target(best)) {
-                    ptr = best;
-                    best = array;
+                if (target(array, n) < target(*best, n)) {
+                    ptr = *best;
+                    *best = array;
                     array = ptr;
                 }
 
-                g_array_free(array, TRUE);
             }
+            g_free(array);
         }
     }
-
-    return best;
 }
 
 GArray *compute(GArray *tasks) {
-    GArray *best;
+    task_t *best;
     gint n, i, *fill;
     gboolean *used;
+    GArray *result;
 
     /* Creating necessary helper tables */
     n = (gint)tasks->len;
     used = g_new0(gboolean, n);
     fill = g_new(gint, n);
+    best = g_new(task_t, n);
+    memcpy(best, tasks->data, n*sizeof(task_t));
 
-    /* TODO memcpy tasks->data instead */
-    best = g_array_sized_new(FALSE, FALSE, sizeof(task_t), n);
-    for (i = 0; i < n; i++) {
-        g_array_append_val(best, g_array_index(tasks, task_t, i));
-    }
+    permute(n, (task_t *)tasks->data, fill, 0, used, &best);
 
-    best = permute(n, (task_t *)tasks->data, fill, 0, used, best);
+    /* rebuilding g_array */
+    result = g_array_sized_new(FALSE, FALSE, sizeof(task_t), n);
+    for (i = 0; i < n; i++) g_array_append_val(result, best[i]);
 
+    /* freeing temporary buffers */
+    g_free(best);
     g_free(fill);
     g_free(used);
 
-    return best;
+    return result;
 }
 
 int main(void) {
