@@ -60,27 +60,35 @@ gint target(task_t *solution, gint n) {
 
 void permute(gint n, task_t *tasks, gint *fill, gint index, gboolean *used, task_t **best) {
     gint i, j;
+    gboolean skip;
     task_t *array, *ptr;
 
     for (i = 0; i < n; i++) {
         if (used[i] == FALSE) {
             fill[index] = i;
 
-            /* Rebuilding task array */
-            array = g_new(task_t, n);
-            for (j = 0; j < index; j++) array[j] = tasks[fill[j]];
-
             if (index < n-1) {
-                /* Override point for elimination, return from here to skip */
-                if (target(array, index) > target(*best, n)) return;
+                /* Rebuilding task array */
+                array = g_new(task_t, n);
+                for (j = 0; j < index; j++) array[j] = tasks[fill[j]];
 
-                used[i] = TRUE;
-                permute(n, tasks, fill, index + 1, used, best);
-                used[i] = FALSE;
+                /* Override point for elimination */
+                skip = FALSE;
+
+                /* Skip if incomplete permutation is worse than the best */
+                if (target(array, index) > target(*best, n)) skip = TRUE;
+
+                if (!skip) {
+                    used[i] = TRUE;
+                    permute(n, tasks, fill, index + 1, used, best);
+                    used[i] = FALSE;
+                }
+
+                g_free(array);
             } else {
-                /* We have a complete permutation */
-
-
+                /* We have a complete permutation, rebuilding task array */
+                array = g_new(task_t, n);
+                for (j = 0; j < n; j++) array[j] = tasks[fill[j]];
                 /* Calling target function */
                 if (target(array, n) < target(*best, n)) {
                     ptr = *best;
@@ -88,8 +96,8 @@ void permute(gint n, task_t *tasks, gint *fill, gint index, gboolean *used, task
                     array = ptr;
                 }
 
+                g_free(array);
             }
-            g_free(array);
         }
     }
 }
