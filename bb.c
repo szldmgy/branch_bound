@@ -56,8 +56,65 @@ void print_tasks(GArray *tasks, GArray *best) {
     }
 }
 
+gint target(GArray *solution) {
+    return 42;
+}
+
+/* TODO rewrite to pass best as a task_t array instead of GArray */
+GArray *permute(gint n, task_t *tasks, gint *fill, gint index, gboolean *used, GArray *best) {
+    gint i, j;
+    GArray *array, *ptr;
+
+    for (i = 0; i < n; i++) {
+        if (used[i] == FALSE) {
+            fill[index] = i;
+            if (index < n-1) {
+                /* Override point for elimination */
+
+                used[i] = TRUE;
+                permute(n, tasks, fill, index + 1, used, best);
+                used[i] = FALSE;
+            } else {
+                /* We have a complete permutation, rebuilding task array */
+                array = g_array_sized_new(FALSE, FALSE, sizeof(task_t), n);
+                for (j = 0; j < n; j++)
+                    g_array_append_val(array, tasks[fill[j]]);
+
+                /* Calling target function */
+                if (target(array) < target(best)) {
+                    ptr = best;
+                    best = array;
+                    array = ptr;
+                }
+
+                g_array_free(array, TRUE);
+            }
+        }
+    }
+
+    return best;
+}
+
 GArray *compute(GArray *tasks) {
-    GArray *best = NULL;
+    GArray *best;
+    gint n, i, *fill;
+    gboolean *used;
+
+    /* Creating necessary helper tables */
+    n = (gint)tasks->len;
+    used = g_new0(gboolean, n);
+    fill = g_new(gint, n);
+
+    /* TODO memcpy tasks->data instead */
+    best = g_array_sized_new(FALSE, FALSE, sizeof(task_t), n);
+    for (i = 0; i < n; i++) {
+        g_array_append_val(best, g_array_index(tasks, task_t, i));
+    }
+
+    best = permute(n, (task_t *)tasks->data, fill, 0, used, best);
+
+    g_free(fill);
+    g_free(used);
 
     return best;
 }
@@ -65,7 +122,7 @@ GArray *compute(GArray *tasks) {
 int main(void) {
     GArray *tasks, *best;
 
-    tasks = read_tasks("data/5.txt");
+    tasks = read_tasks("data/11.txt");
     best = compute(tasks);
     print_tasks(tasks, best);
 
