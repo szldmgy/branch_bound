@@ -58,6 +58,20 @@ gint target(task_t *solution, gint n) {
     return sum;
 }
 
+gboolean swap_elimination(task_t *array, gint n) {
+    /* task_t *copy; */
+    gboolean result;
+
+    /* Creating defensive copy */
+    /* copy = g_new(task_t, n); */
+    /* memcpy(copy, array, n*sizeof(task_t)); */
+
+    result = FALSE;
+
+    /* g_free(copy); */
+    return result;
+}
+
 void permute(gint n, task_t *tasks, gint *fill, gint index, gboolean *used, task_t **best) {
     gint i, j;
     gboolean skip;
@@ -69,14 +83,17 @@ void permute(gint n, task_t *tasks, gint *fill, gint index, gboolean *used, task
 
             if (index < n-1) {
                 /* Rebuilding task array */
-                array = g_new(task_t, n);
-                for (j = 0; j < index; j++) array[j] = tasks[fill[j]];
+                array = g_new(task_t, index + 1);
+                for (j = 0; j < index + 1; j++) array[j] = tasks[fill[j]];
 
                 /* Override point for elimination */
                 skip = FALSE;
 
                 /* Skip if incomplete permutation is worse than the best */
-                if (target(array, index) > target(*best, n)) skip = TRUE;
+                if (target(array, index + 1) > target(*best, n)) skip = TRUE;
+
+                /* Skip if there is a better solution in a rotated subset */
+                if (swap_elimination(array, index + 1)) skip = TRUE;
 
                 if (!skip) {
                     used[i] = TRUE;
