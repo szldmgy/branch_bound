@@ -84,7 +84,7 @@ gboolean swap_skip(task_t *array, gint n, gint original) {
     return result;
 }
 
-void permute(gint n, task_t *tasks, gint *fill, gint index, gboolean *used, task_t **best) {
+void permute(gint n, task_t *tasks, gint *fill, gint index, gboolean *used, task_t **best, gint *best_result) {
     gint i, j, array_result;
     gboolean skip;
     task_t *array, *ptr;
@@ -104,14 +104,14 @@ void permute(gint n, task_t *tasks, gint *fill, gint index, gboolean *used, task
                 /* Counting this value once, it will be used several times */
                 array_result = target(array, index + 1);
                 /* Skip if incomplete permutation is worse than the best */
-                if (array_result > target(*best, n)) skip = TRUE;
+                if (array_result > *best_result) skip = TRUE;
 
                 /* Skip if there is a better solution in a rotated subset */
                 if (swap_skip(array, index + 1, array_result)) skip = TRUE;
 
                 if (!skip) {
                     used[i] = TRUE;
-                    permute(n, tasks, fill, index + 1, used, best);
+                    permute(n, tasks, fill, index + 1, used, best, best_result);
                     used[i] = FALSE;
                 }
 
@@ -121,10 +121,13 @@ void permute(gint n, task_t *tasks, gint *fill, gint index, gboolean *used, task
                 array = g_new(task_t, n);
                 for (j = 0; j < n; j++) array[j] = tasks[fill[j]];
                 /* Calling target function */
-                if (target(array, n) < target(*best, n)) {
+                if (target(array, n) < *best_result) {
                     ptr = *best;
                     *best = array;
                     array = ptr;
+
+                    /* Caching target function for best result */
+                    *best_result = target(*best, n);
                 }
 
                 g_free(array);
@@ -135,7 +138,7 @@ void permute(gint n, task_t *tasks, gint *fill, gint index, gboolean *used, task
 
 GArray *compute(GArray *tasks) {
     task_t *best;
-    gint n, i, *fill;
+    gint n, i, best_result, *fill;
     gboolean *used;
     GArray *result;
 
@@ -146,7 +149,8 @@ GArray *compute(GArray *tasks) {
     best = g_new(task_t, n);
     memcpy(best, tasks->data, n*sizeof(task_t));
 
-    permute(n, (task_t *)tasks->data, fill, 0, used, &best);
+    best_result = target((task_t *)tasks->data, n);
+    permute(n, (task_t *)tasks->data, fill, 0, used, &best, &best_result);
 
     /* rebuilding g_array */
     result = g_array_sized_new(FALSE, FALSE, sizeof(task_t), n);
