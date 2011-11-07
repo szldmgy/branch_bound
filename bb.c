@@ -47,12 +47,15 @@ void print_tasks(GArray *tasks, GArray *best) {
     }
 }
 
+/* TODO Add caching */
 gint target(task_t *solution, gint n) {
-    gint sum, i, time;
+    register gint sum, i, time, tmp;
 
     for (i = 0, time = 0, sum = 0; i < n; i++) {
         time += solution[i].length;
-        sum += solution[i].weight * MAX(0, time - solution[i].due);
+        /* Evaluating expression once */
+        tmp = time - solution[i].due;
+        sum += solution[i].weight * MAX(0, tmp);
     }
 
     return sum;
