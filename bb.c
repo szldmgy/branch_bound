@@ -1,56 +1,51 @@
-#include <glib.h>
-#include <glib/gprintf.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 
+#define MAX(a, b) ((a > b)? (a): (b))
+
 typedef struct _task_t {
-    gint id;
-    gint length;
-    gint due;
-    gint weight;
+    int id;
+    int length;
+    int due;
+    int weight;
 } task_t;
 
-GArray *read_tasks(void) {
-    GArray *tasks;
-    task_t t;
-    gint i;
+int read_tasks(task_t **tasks_ptr) {
+    task_t *tasks, t;
+    int i;
 
-    i = 1;
-    tasks = g_array_new(FALSE, FALSE, sizeof(task_t));
-    while (scanf("%d %d %d", &t.length, &t.due, &t.weight) != EOF) {
-        t.id = i++;
-        g_array_append_val(tasks, t);
+    tasks = NULL;
+    for (i = 1; scanf("%d %d %d", &t.length, &t.due, &t.weight) != EOF; i++) {
+        tasks = realloc(tasks, i * sizeof(task_t));
+        t.id = i;
+        tasks[i-1] = t;
     }
 
-    return tasks;
+    *tasks_ptr = tasks;
+    return i - 1;
 }
 
-void print_tasks(GArray *tasks, GArray *best) {
-    gint i;
+void print_tasks(int n, task_t *tasks, task_t *best) {
+    int i;
     task_t t;
 
     printf(" Nr | p_j | d_j | w_j \n");
     printf("----+-----+-----+-----\n");
-    for (i = 0; i < (gint)tasks->len; i++) {
-        t = g_array_index(tasks, task_t, i);
+    for (i = 0; i < n; i++) {
+        t = tasks[i];
         printf("%2d. |%4d |%4d |%4d \n", t.id, t.length, t.due, t.weight);
     }
 
-    if (best != NULL) {
-        printf("\nBest solution is: ");
-        for (i = 0; i < (gint)best->len; i++) {
-            t = g_array_index(best, task_t, i);
-            printf("%d ", t.id);
-        }
-        printf("\n");
-    }
+    printf("\nBest solution is: ");
+    for (i = 0; i < n; i++) printf("%d ", best[i].id);
+    printf("\n");
 }
 
 /* TODO Add caching */
-gint target(task_t *solution, gint n) {
-    register gint sum, i, time, tmp;
+int target(task_t *solution, int n) {
+    register int sum, i, time, tmp;
 
     for (i = 0, time = 0, sum = 0; i < n; i++) {
         time += solution[i].length;
@@ -62,16 +57,16 @@ gint target(task_t *solution, gint n) {
     return sum;
 }
 
-gboolean swap_skip(task_t *array, gint n, gint original) {
+char swap_skip(task_t *array, int n, int original) {
     task_t *copy, tmp;
-    gboolean result;
-    gint i;
+    char result;
+    int i;
 
     /* Creating defensive copy */
-    copy = g_new(task_t, n);
+    copy = malloc(n * sizeof(task_t));
     memcpy(copy, array, n*sizeof(task_t));
 
-    result = FALSE;
+    result = 0;
     for (i = n - 1; i > 0; i--) {
         /* Swapping values */
         tmp = copy[i];
@@ -79,41 +74,41 @@ gboolean swap_skip(task_t *array, gint n, gint original) {
         copy[i - 1] = tmp;
 
         if (target(copy, n) < original) {
-            result = TRUE;
+            result = 1;
             break;
         }
     }
 
-    g_free(copy);
+    free(copy);
     return result;
 }
 
-task_t *generate_initial(gint n, task_t *tasks) {
+task_t *generate_initial(int n, task_t *tasks) {
     task_t *initial, *best, *ptr;
-    gint *fill, i, r, iterations, best_result;
-    gboolean *used;
+    int *fill, i, r, iterations, best_result;
+    char *used;
 
-    initial = g_new(task_t, n);
-    fill = g_new(gint, n);
-    used = g_new(gboolean, n);
+    initial = malloc(n * sizeof(task_t));
+    fill = malloc(n * sizeof(int));
+    used = malloc(n * sizeof(char));
     iterations = n*n;
     best = NULL;
 
     srand(time(NULL));
     while (iterations--) {
-        memset(used, 0, n*sizeof(gboolean));
+        memset(used, 0, n*sizeof(char));
         for (i = 0; i < n; i++) {
             r = rand() % n;
-            if (used[r] == FALSE) {
+            if (used[r] == 0) {
                 fill[i] = r;
-                used[r] = TRUE;
+                used[r] = 1;
             } else {
                 /* Value used, generating again */
                 i--;
             }
         }
 
-        initial = g_new(task_t, n);
+        initial = malloc(n * sizeof(task_t));
         for (i = 0; i < n; i++) initial[i] = tasks[fill[i]];
 
         if (best == NULL || best_result > target(initial, n)) {
@@ -122,46 +117,45 @@ task_t *generate_initial(gint n, task_t *tasks) {
             initial = ptr;
             best_result = target(best, n);
         }
-        g_free(initial);
+        free(initial);
     }
 
-    g_free(used);
-    g_free(fill);
+    free(used);
+    free(fill);
     return best;
 }
 
-void permute(gint n, task_t *tasks, gint *fill, gint index, gboolean *used, task_t **best, gint *best_result) {
-    gint i, j, array_result;
-    gboolean cont;
+void permute(int n, task_t *tasks, int *fill, int index, char *used, task_t **best, int *best_result) {
+    int i, j, array_result;
+    char cont;
     task_t *array, *ptr;
 
     for (i = 0; i < n; i++) {
-        if (used[i] == FALSE) {
+        if (used[i] == 0) {
             fill[index] = i;
 
             /* Rebuilding task array */
-            array = g_new(task_t, index + 1);
+            array = malloc((index + 1) * sizeof(task_t));
             for (j = 0; j < index + 1; j++) array[j] = tasks[fill[j]];
             if (index < n-1) {
-
                 /* Override point for elimination */
-                cont = TRUE;
+                cont = 1;
 
                 /* Counting this value once, it will be used several times */
                 array_result = target(array, index + 1);
 
                 /* Skip if incomplete permutation is worse than the best */
-                if (array_result > *best_result) cont = FALSE;
+                if (array_result > *best_result) cont = 0;
 
                 /* Skip if there is a better solution in a swapped subset */
-                if (cont && swap_skip(array, index + 1, array_result)) cont = FALSE;
+                if (cont && swap_skip(array, index + 1, array_result)) cont = 0;
 
-                /* if (cont && blah blah) cont = TRUE; */
+                /* if (cont && blah blah) cont = 0; */
 
                 if (cont) {
-                    used[i] = TRUE;
+                    used[i] = 1;
                     permute(n, tasks, fill, index + 1, used, best, best_result);
-                    used[i] = FALSE;
+                    used[i] = 0;
                 }
             } else {
                 /* We have a complete permutation, calling target function */
@@ -174,49 +168,44 @@ void permute(gint n, task_t *tasks, gint *fill, gint index, gboolean *used, task
                     *best_result = target(*best, n);
                 }
             }
-            g_free(array);
+            free(array);
         }
     }
 }
 
-GArray *compute(GArray *tasks) {
+task_t *compute(int n, task_t *tasks) {
     task_t *best;
-    gint n, i, best_result, *fill;
-    gboolean *used;
-    GArray *result;
+    int best_result, *fill;
+    char *used;
 
     /* Creating necessary helper tables */
-    n = (gint)tasks->len;
-    used = g_new0(gboolean, n);
-    fill = g_new(gint, n);
+    used = malloc(n * sizeof(char));
+    memset(used, 0, n * sizeof(char));
+    fill = malloc(n * sizeof(int));
 
     /* Generating initial result */
-    best = generate_initial(n, (task_t *)tasks->data);
+    best = generate_initial(n, tasks);
     best_result = target(best, n);
 
-    permute(n, (task_t *)tasks->data, fill, 0, used, &best, &best_result);
-
-    /* rebuilding g_array */
-    result = g_array_sized_new(FALSE, FALSE, sizeof(task_t), n);
-    for (i = 0; i < n; i++) g_array_append_val(result, best[i]);
+    permute(n, tasks, fill, 0, used, &best, &best_result);
 
     /* freeing temporary buffers */
-    g_free(best);
-    g_free(fill);
-    g_free(used);
+    free(fill);
+    free(used);
 
-    return result;
+    return best;
 }
 
 int main(void) {
-    GArray *tasks, *best;
+    task_t *tasks, *best;
+    int n;
 
-    tasks = read_tasks();
-    best = compute(tasks);
-    print_tasks(tasks, best);
+    n = read_tasks(&tasks);
+    best = compute(n, tasks);
+    print_tasks(n, tasks, best);
 
-    if (tasks) g_array_free(tasks, TRUE);
-    if (best) g_array_free(best, TRUE);
+    free(tasks);
+    free(best);
 
     return 0;
 }
