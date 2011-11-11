@@ -1,6 +1,6 @@
 CC = clang
-CFLAGS = -Wall -Wextra -pedantic `pkg-config --cflags glib-2.0`
-LDFLAGS = `pkg-config --libs glib-2.0`
+CFLAGS = -Wall -Wextra -pedantic
+LDFLAGS =
 PROGNAME = bb
 
 ifeq ($(CC),clang)
