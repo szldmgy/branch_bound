@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+for i in $(ls samples); do
+  echo -n "${i/.txt/} "
+  gtime -f "%E" ./bb <"samples/$i" 2>&1 >/dev/null
+done
+
