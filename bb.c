@@ -116,11 +116,11 @@ task_t *generate_initial(int n, task_t *tasks) {
     int *fill, i, r, iterations, best_result;
     char *used;
 
-    initial = malloc(n * sizeof(task_t));
     fill = malloc(n * sizeof(int));
     used = malloc(n * sizeof(char));
     iterations = n*n;
     best = NULL;
+    initial = NULL;
 
     srand(time(NULL));
     while (iterations--) {
