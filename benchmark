@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 
+count=5
 for i in $(ls samples); do
   echo -n "${i/.txt/} "
-  gtime -f "%E" ./bb <"samples/$i" 2>&1 >/dev/null
+  for ((j=0; j<count; j++)); do
+    gtime -f "%E" ./bb <"samples/$i" 2>&1 >/dev/null | tr '\n' ' '
+  done
+  echo
 done
 
