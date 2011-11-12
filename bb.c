@@ -1,7 +1,34 @@
+/* Copyright (c) 2011 Mateusz Lenik <mt.lenik@gmail.com>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ * derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ''AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <limits.h>
 
 #define MAX(a, b) ((a > b)? (a): (b))
 
@@ -14,17 +41,19 @@ typedef struct _task_t {
 
 int read_tasks(task_t **tasks_ptr) {
     task_t *tasks, t;
-    int i;
+    int i, limit;
 
     tasks = NULL;
-    for (i = 1; scanf("%d %d %d", &t.length, &t.due, &t.weight) != EOF; i++) {
-        tasks = realloc(tasks, i * sizeof(task_t));
+    limit = INT_MAX;
+    i = 0;
+    while (limit-- && scanf("%d %d %d", &t.length, &t.due, &t.weight) != EOF) {
+        tasks = realloc(tasks, ++i * sizeof(task_t));
         t.id = i;
         tasks[i-1] = t;
     }
 
     *tasks_ptr = tasks;
-    return i - 1;
+    return i;
 }
 
 void print_tasks(int n, task_t *tasks, task_t *best) {
@@ -43,7 +72,6 @@ void print_tasks(int n, task_t *tasks, task_t *best) {
     printf("\n");
 }
 
-/* TODO Add caching */
 int target(task_t *solution, int n) {
     register int sum, i, time, tmp;
 
@@ -137,11 +165,12 @@ void permute(int n, task_t *tasks, int *fill, int index, char *used, task_t **be
             /* Rebuilding task array */
             array = malloc((index + 1) * sizeof(task_t));
             for (j = 0; j < index + 1; j++) array[j] = tasks[fill[j]];
+
             if (index < n-1) {
                 /* Override point for elimination */
                 cont = 1;
 
-                /* Counting this value once, it will be used several times */
+                /* Computing this value once, it will be used several times */
                 array_result = target(array, index + 1);
 
                 /* Skip if incomplete permutation is worse than the best */
@@ -178,7 +207,7 @@ task_t *compute(int n, task_t *tasks) {
     int best_result, *fill;
     char *used;
 
-    /* Creating necessary helper tables */
+    /* Creating necessary helper buffers */
     used = malloc(n * sizeof(char));
     memset(used, 0, n * sizeof(char));
     fill = malloc(n * sizeof(int));
@@ -187,6 +216,7 @@ task_t *compute(int n, task_t *tasks) {
     best = generate_initial(n, tasks);
     best_result = target(best, n);
 
+    /* Computing happens here */
     permute(n, tasks, fill, 0, used, &best, &best_result);
 
     /* freeing temporary buffers */
