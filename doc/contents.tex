@@ -1,0 +1,101 @@
+\section{Wstęp} % (fold)
+  \label{sec:wstep}
+
+  Celem pierwszej części laboratorium było zaimplementowanie i przetestowanie
+  w praktyce algorytmu ,,Branch and Bound''. Algorytm ten umożliwia szybkie
+  przeszukiwanie drzewa rozwiązań pomijając przeglądanie gałęzi, które na pewno
+  nie zawierają rozwiązania optymalnego.
+
+  Algorytm miał rozwiązywać jednoprocesorowy problem szeregowania zadań przy
+  kryterium minimalizacji ważonej sumy opóźnień zadań.
+
+  Problem ten można zdefiniować w następujący sposób
+
+  Danych jest $n$ zadań, które mają być wykonane bez przerywania na pojedynczym
+  procesorze, który może wykonywać najwyżej jedno zadanie jednocześnie.
+  Każde zadanie $j$ jest dostępne do wykonania w chwili zero. Do wykonania
+  wymagane jest $p_j$ jednostek czasu oraz zadanie ma określony priorytet $w_j$
+  i określony czas zakończenia wykonywania $d_j$.
+  Zadanie $j$ uznaje się za spóźnione, jeśli zakończy się wykonywać po terminie
+  $d_j$. Miarą tego opóźnienia jest wielkość $T_j = \texttt{max}\{0, C_j - d_j\}$,
+  gdzie $C_j$ jest terminem zakończenia wykonywania zadania $j$. Problem polega
+  na znalezieniu takiej kolejności wykonywania zadań, aby zminimalizować
+  kryterium $\sum w_j \cdot T_j$.
+
+% section wstep (end)
+
+\section{Implementacja} % (fold)
+  \label{sec:impl}
+
+  Algorytm ,,Branch and Bound'' zaimplementowałem w języku C. Permutacje są
+  generowane za pomocą algorytmu rekurencyjnego. Rozwiązanie początkowe jest
+  generowane losowo. Główna część algorytmu realizowane jest przez funkcję
+  \texttt{permute}, natomiast funkcja \texttt{compute} przygotowuje bufory,
+  które wykorzystywane będą przez funkcję \texttt{permute}.
+
+  Lista zadań czytana jest ze standardowego strumienia wejściowego. Rozwiązanie
+  to zostało użyte w celu uproszczenia programu. Zarówno na systemie Windows
+  oraz *NIX możliwe jest przekierowanie zawartości pliku do standardowego
+  strumienia wejściowego za pomocą operatora \texttt{<} podczas wywoływania
+  programu.
+
+  Zaimplementowane zostały następujące procedury eliminacyjne.
+  \begin{enumerate}
+    \item Jeśli dolne ograniczenie dla częściowej permutacji jest większe niż
+          górne ograniczenie, gałąź ta zostaje odrzucona;
+    \item Jeśli po przeniesieniu ostatniego zadania na pozycje $x = 1,\ldots,k-1$
+          i obliczeniu $L_x = \sum_{j=1}^{k} w_j \cdot T_j$. Jeśli $\exists x, L_x < L_k$,
+          gałąź ta zostaje odrzucona.
+  \end{enumerate}
+
+  Jeśli jedna z wcześniej uruchomionych metod odrzuci gałąź, kolejne metody nie
+  są uruchamiane.
+
+% section impl (end)
+
+\section{Wyniki} % (fold)
+  \label{sec:wyniki}
+
+  Program został uruchomiony dla zadanych instancji w trzech wersjach.
+  Pierwsza z nich nie korzystała z żadnej procedury eliminacyjnej (przegląd
+  zupełny), druga korzystała z jednej metody eliminacji (porównanie dolnego
+  ograniczenia z górnym), a trzecia ze wszystkich zaimplementowanych metody
+  eliminacyjnych.
+
+  Wyniki działania programów znajdują się w poniższej tabeli.
+
+  \begin{center}
+    \begin{tabular}{c}
+
+    \end{tabular}
+  \end{center}
+
+  Widać jednoznacznie, że większa liczba metod eliminacyjnych powoduje znaczne
+  skrócenie czasu przeszukiwania drzewa rozwiązań.
+
+  Testy zostały przeprowadzone na procesorze Core 2 Duo, a program skompilowany
+  został za pomocą kompilatora Clang\footnote{http://clang.llvm.org}. Program
+  zawarty na płycie CD skompilowany został kompilatorem GCC i zawiera wszystkie
+  metody eliminacyjne.
+
+% section wyniki (end)
+
+\section{Wnioski} % (fold)
+  \label{sec:wnioski}
+
+  Algorytm jest bardzo skuteczny dzięki zastosowaniu metod eliminacyjnych, które
+  powodują znaczne skrócenie czasu przeszukiwania drzewa rozwiązań.
+  Czas odnajdywania rozwiązania można znacznie przyspieszyć stosując algorytm
+  aproksymacyjny, bądź heurystyczny, generowania rozwiązania początkowego.
+  Algorytm taki nie został zaimplementowany, gdyż nie był to cel tego zadania.
+
+% section wnioski (end)
+
+\newpage
+\appendix
+\section{Pełen listing kodu} % (fold)
+  \label{sec:listing}
+  \singlespacing
+  \inputminted{c}{../bb.c}
+
+% section listing} (end)
