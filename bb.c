@@ -206,7 +206,8 @@ void permute(int n, task_t *tasks, int *fill, int index, char *used, task_t **be
                 /* Skip if there is a better solution in a swapped subset */
                 if (cont && swap_skip(array, index + 1, array_result)) cont = 0;
 
-                /* Skip if the */
+                /* Skip if there is a better solution after swapping the longest
+                 * task with last task */
                 if (cont && length_skip(array, index + 1, array_result)) cont = 0;
 
                 if (cont) {
