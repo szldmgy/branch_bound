@@ -30,8 +30,15 @@
 #include <time.h>
 #include <limits.h>
 
-#define MAX(a, b) ((a > b)? (a): (b))
+/*
+ * Macro returning greater parameter.
+ * Use with caution, as it may have unexpected side effects.
+ */
+#define MAX(a, b) (((a) > (b))? (a): (b))
 
+/*
+ * Struct representing the task.
+ */
 typedef struct _task_t {
     int id;
     int length;
@@ -39,6 +46,11 @@ typedef struct _task_t {
     int weight;
 } task_t;
 
+/*
+ * Reads tasks from +stdin+, returns count and sets +tasks_ptr+.
+ *
+ * task_ptr - Pointer to return the array.
+ */
 int read_tasks(task_t **tasks_ptr) {
     task_t *tasks, t;
     int i, limit;
@@ -56,6 +68,13 @@ int read_tasks(task_t **tasks_ptr) {
     return i;
 }
 
+/*
+ * Prints task list and best permutation to +stdout+.
+ *
+ * n     - Number of tasks.
+ * tasks - Task array.
+ * best  - Array with the best permutation.
+ */
 void print_tasks(int n, task_t *tasks, task_t *best) {
     int i;
     task_t t;
@@ -72,6 +91,12 @@ void print_tasks(int n, task_t *tasks, task_t *best) {
     printf("\n");
 }
 
+/*
+ * Computes value of the target function.
+ *
+ * n        - Number of tasks.
+ * solution - Task array.
+ */
 int target(task_t *solution, int n) {
     register int sum, i, time, tmp;
 
@@ -85,6 +110,13 @@ int target(task_t *solution, int n) {
     return sum;
 }
 
+/*
+ * Second elimination procedure.
+ *
+ * array    - Task array containing partial permutation.
+ * n        - Number of elements.
+ * original - Value of +target+ function for +array+.
+ */
 char swap_skip(task_t *array, int n, int original) {
     task_t *copy, tmp;
     char result;
@@ -111,6 +143,13 @@ char swap_skip(task_t *array, int n, int original) {
     return result;
 }
 
+/*
+ * Third elimination procedure.
+ *
+ * array    - Task array containing partial permutation.
+ * n        - Number of elements.
+ * original - Value of +target+ function for +array+.
+ */
 char length_skip(task_t *array, int n, int original) {
     task_t *copy, tmp;
     char result;
@@ -138,6 +177,12 @@ char length_skip(task_t *array, int n, int original) {
     return result;
 }
 
+/*
+ * Generates random initial value.
+ *
+ * n     - Number of elements.
+ * tasks - Task array.
+ */
 task_t *generate_initial(int n, task_t *tasks) {
     task_t *initial, *best, *ptr;
     int *fill, i, r, iterations, best_result;
@@ -180,7 +225,19 @@ task_t *generate_initial(int n, task_t *tasks) {
     return best;
 }
 
-void permute(int n, task_t *tasks, int *fill, int index, char *used, task_t **best, int *best_result) {
+/*
+ * Recursive function that generates permutations.
+ *
+ * n           - Number of elements.
+ * tasks       - Task array.
+ * fill        - Array holding permutation.
+ * index       - Current index in permutation array.
+ * used        - Array containing informations, whether task was used or not.
+ * best        - Array containing best result.
+ * best_result - Value of +target+ function for +best+ array.
+ */
+void permute(int n, task_t *tasks, int *fill, int index,
+             char *used, task_t **best, int *best_result) {
     int i, j, array_result;
     char cont;
     task_t *array, *ptr;
@@ -231,6 +288,12 @@ void permute(int n, task_t *tasks, int *fill, int index, char *used, task_t **be
     }
 }
 
+/*
+ * Prepares buffers and calls +permute+ function.
+ *
+ * n     - Number of elements.
+ * tasks - Task array.
+ */
 task_t *compute(int n, task_t *tasks) {
     task_t *best;
     int best_result, *fill;
@@ -255,6 +318,10 @@ task_t *compute(int n, task_t *tasks) {
     return best;
 }
 
+/*
+ * Main function in the program. Reads the data in, runs computations and prints
+ * data out.
+ */
 int main(void) {
     task_t *tasks, *best;
     int n;

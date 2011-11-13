@@ -5,14 +5,15 @@
   w praktyce algorytmu ,,Branch and Bound''. Algorytm ten umożliwia szybkie
   przeszukiwanie drzewa rozwiązań pomijając przeglądanie gałęzi, które na pewno
   nie zawierają rozwiązania optymalnego.
+  \vspace{1em}
 
   Algorytm miał rozwiązywać jednoprocesorowy problem szeregowania zadań przy
   kryterium minimalizacji ważonej sumy opóźnień zadań.
+  \vspace{1em}
 
-  Problem ten można zdefiniować w następujący sposób
-
-  Danych jest $n$ zadań, które mają być wykonane bez przerywania na pojedynczym
-  procesorze, który może wykonywać najwyżej jedno zadanie jednocześnie.
+  Problem ten można zdefiniować w następujący sposób: danych jest $n$ zadań,
+  które mają być wykonane bez przerywania na pojedynczym procesorze, który może
+  wykonywać najwyżej jedno zadanie jednocześnie.
   Każde zadanie $j$ jest dostępne do wykonania w chwili zero. Do wykonania
   wymagane jest $p_j$ jednostek czasu oraz zadanie ma określony priorytet $w_j$
   i określony czas zakończenia wykonywania $d_j$.
@@ -32,25 +33,32 @@
   generowane losowo. Główna część algorytmu realizowane jest przez funkcję
   \texttt{permute}, natomiast funkcja \texttt{compute} przygotowuje bufory,
   które wykorzystywane będą przez funkcję \texttt{permute}.
+  \vspace{1em}
 
   Lista zadań czytana jest ze standardowego strumienia wejściowego. Rozwiązanie
   to zostało użyte w celu uproszczenia programu. Zarówno na systemie Windows
   oraz *NIX możliwe jest przekierowanie zawartości pliku do standardowego
   strumienia wejściowego za pomocą operatora \texttt{<} podczas wywoływania
   programu.
+  \vspace{1em}
 
   Zaimplementowane zostały następujące procedury eliminacyjne.
   \begin{enumerate}
     \item Jeśli dolne ograniczenie dla częściowej permutacji jest większe niż
           górne ograniczenie, gałąź ta zostaje odrzucona;
     \item Jeśli po przeniesieniu ostatniego zadania na pozycje $x = 1,\ldots,k-1$
-          i obliczeniu $L_x = \sum_{j=1}^{k} w_j \cdot T_j$. Jeśli $\exists x, L_x < L_k$,
-          gałąź ta zostaje odrzucona.
+          i obliczeniu $L_x = \sum_{j=1}^{k} w_j \cdot T_j$. Jeśli dla
+          któregokolwiek $x$ zachodzi $L_x < L_k$, gałąź ta zostaje odrzucona;
+    \item Jeśli istnieje zadanie dłuższe od ostatniego i po zamianie tych zadań
+          kolejnością wartość $L_x < L_k$, gałąź ta zostaje odrzucona.
   \end{enumerate}
 
   Jeśli jedna z wcześniej uruchomionych metod odrzuci gałąź, kolejne metody nie
   są uruchamiane.
+  \vspace{1em}
 
+  Przy każdej funkcji w programie znajduje się komentarz opisujący jej działanie
+  oraz parametry do niej przekazywane.
 % section impl (end)
 
 \section{Wyniki} % (fold)
@@ -61,17 +69,36 @@
   zupełny), druga korzystała z jednej metody eliminacji (porównanie dolnego
   ograniczenia z górnym), a trzecia ze wszystkich zaimplementowanych metody
   eliminacyjnych.
+  \vspace{1em}
 
   Wyniki działania programów znajdują się w poniższej tabeli.
 
   \begin{center}
-    \begin{tabular}{c}
-
+    \begin{tabular}{|c|c|c|c|}
+      \hline
+      $n$ & Wszystkie eliminacje [s] & Jedna eliminacja [s] & Przegląd zupełny [s]\\
+      \hline
+      5 & 0,00 & 0,00 & 0,00 \\
+      6 & 0,00 & 0,00 & 0,00 \\
+      8 & 0,00 & 0,01 & 0,04 \\
+      9 & 0,00 & 0,18 & 0,35 \\
+      10 & 0,00 & 1,17 & 4,56 \\
+      11 & 0,01 & 10,09 & 455,75 \\
+      12 & 0,04 & 102,11 & $\infty$ \\
+      13 & 0,09 & $\infty$ & $\infty$ \\
+      15 & 0,61 & $\infty$ & $\infty$ \\
+      17 & 4,88 & $\infty$ & $\infty$ \\
+      18 & 10,67 & $\infty$ & $\infty$ \\
+      \hline
     \end{tabular}
   \end{center}
 
+  Znak $\infty$ został użyty w miejscach, gdzie czas obliczeń był bardzo duży.
+  \vspace{1em}
+
   Widać jednoznacznie, że większa liczba metod eliminacyjnych powoduje znaczne
   skrócenie czasu przeszukiwania drzewa rozwiązań.
+  \vspace{1em}
 
   Testy zostały przeprowadzone na procesorze Core 2 Duo, a program skompilowany
   został za pomocą kompilatora Clang\footnote{http://clang.llvm.org}. Program
