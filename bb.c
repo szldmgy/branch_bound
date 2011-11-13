@@ -111,6 +111,33 @@ char swap_skip(task_t *array, int n, int original) {
     return result;
 }
 
+char length_skip(task_t *array, int n, int original) {
+    task_t *copy, tmp;
+    char result;
+    int i;
+
+    /* Creating defensive copy */
+    copy = malloc(n * sizeof(task_t));
+    memcpy(copy, array, n * sizeof(task_t));
+
+    result = 0;
+    for (i = 0; i < n; i++) {
+        if (array[i].length > array[n-1].length) {
+            tmp = copy[i];
+            copy[i] = copy[n-1];
+            copy[n-1] = tmp;
+
+            if (target(copy, n) < original) {
+                result = 1;
+                break;
+            }
+        }
+    }
+
+    free(copy);
+    return result;
+}
+
 task_t *generate_initial(int n, task_t *tasks) {
     task_t *initial, *best, *ptr;
     int *fill, i, r, iterations, best_result;
@@ -179,7 +206,8 @@ void permute(int n, task_t *tasks, int *fill, int index, char *used, task_t **be
                 /* Skip if there is a better solution in a swapped subset */
                 if (cont && swap_skip(array, index + 1, array_result)) cont = 0;
 
-                /* if (cont && blah blah) cont = 0; */
+                /* Skip if the */
+                if (cont && length_skip(array, index + 1, array_result)) cont = 0;
 
                 if (cont) {
                     used[i] = 1;
